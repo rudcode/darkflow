@@ -121,16 +121,22 @@ class TFNet(object):
 		self.out = tf.identity(state.out, name='output')
 
 	def setup_meta_ops(self):
+		import multiprocessing
+		cpu_count = multiprocessing.cpu_count()
+	
 		cfg = dict({
 			'allow_soft_placement': False,
-			'log_device_placement': False
+			'log_device_placement': False,
+			'inter_op_parallelism_threads': cpu_count,
+			'intra_op_parallelism_threads': cpu_count
 		})
 
 		utility = min(self.FLAGS.gpu, 1.)
 		if utility > 0.0:
 			self.say('GPU mode with {} usage'.format(utility))
 			cfg['gpu_options'] = tf.GPUOptions(
-				per_process_gpu_memory_fraction = utility)
+				per_process_gpu_memory_fraction = utility,
+				allow_growth = True)
 			cfg['allow_soft_placement'] = True
 		else: 
 			self.say('Running entirely on CPU')
